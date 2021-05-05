@@ -42,12 +42,12 @@ namespace TLSDemonstration.UserControls
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnStart = new System.Windows.Forms.ToolStripButton();
             this.btnStop = new System.Windows.Forms.ToolStripButton();
-            this.label3 = new System.Windows.Forms.Label();
-            this.lblUserIP = new System.Windows.Forms.Label();
             this.tbWebAddress = new System.Windows.Forms.TextBox();
             this.lblWebsite = new System.Windows.Forms.Label();
             this.lblWebIP = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
+            this.cobInterfaces = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -64,7 +64,7 @@ namespace TLSDemonstration.UserControls
             this.lvMessages.FullRowSelect = true;
             this.lvMessages.GridLines = true;
             this.lvMessages.HideSelection = false;
-            this.lvMessages.Location = new System.Drawing.Point(3, 119);
+            this.lvMessages.Location = new System.Drawing.Point(3, 139);
             this.lvMessages.Name = "lvMessages";
             this.lvMessages.Size = new System.Drawing.Size(552, 230);
             this.lvMessages.TabIndex = 0;
@@ -116,7 +116,7 @@ namespace TLSDemonstration.UserControls
             this.btnStop});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1044, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(575, 25);
             this.toolStrip1.TabIndex = 1;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -142,28 +142,9 @@ namespace TLSDemonstration.UserControls
             this.btnStop.ToolTipText = "Stop";
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(4, 76);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(53, 13);
-            this.label3.TabIndex = 5;
-            this.label3.Text = "User IP:";
-            // 
-            // lblUserIP
-            // 
-            this.lblUserIP.AutoSize = true;
-            this.lblUserIP.Location = new System.Drawing.Point(63, 76);
-            this.lblUserIP.Name = "lblUserIP";
-            this.lblUserIP.Size = new System.Drawing.Size(27, 13);
-            this.lblUserIP.TabIndex = 7;
-            this.lblUserIP.Text = "N/A";
-            // 
             // tbWebAddress
             // 
-            this.tbWebAddress.Location = new System.Drawing.Point(7, 48);
+            this.tbWebAddress.Location = new System.Drawing.Point(7, 84);
             this.tbWebAddress.Name = "tbWebAddress";
             this.tbWebAddress.Size = new System.Drawing.Size(227, 20);
             this.tbWebAddress.TabIndex = 8;
@@ -172,7 +153,7 @@ namespace TLSDemonstration.UserControls
             // 
             this.lblWebsite.AutoSize = true;
             this.lblWebsite.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblWebsite.Location = new System.Drawing.Point(7, 31);
+            this.lblWebsite.Location = new System.Drawing.Point(7, 67);
             this.lblWebsite.Name = "lblWebsite";
             this.lblWebsite.Size = new System.Drawing.Size(169, 13);
             this.lblWebsite.TabIndex = 9;
@@ -181,7 +162,7 @@ namespace TLSDemonstration.UserControls
             // lblWebIP
             // 
             this.lblWebIP.AutoSize = true;
-            this.lblWebIP.Location = new System.Drawing.Point(63, 94);
+            this.lblWebIP.Location = new System.Drawing.Point(63, 114);
             this.lblWebIP.Name = "lblWebIP";
             this.lblWebIP.Size = new System.Drawing.Size(27, 13);
             this.lblWebIP.TabIndex = 11;
@@ -191,26 +172,46 @@ namespace TLSDemonstration.UserControls
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(4, 94);
+            this.label2.Location = new System.Drawing.Point(4, 114);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(53, 13);
             this.label2.TabIndex = 10;
             this.label2.Text = "Web IP:";
             // 
+            // cobInterfaces
+            // 
+            this.cobInterfaces.FormattingEnabled = true;
+            this.cobInterfaces.Location = new System.Drawing.Point(75, 39);
+            this.cobInterfaces.Name = "cobInterfaces";
+            this.cobInterfaces.Size = new System.Drawing.Size(159, 21);
+            this.cobInterfaces.TabIndex = 12;
+            this.cobInterfaces.SelectedIndexChanged += new System.EventHandler(this.cobInterfaces_SelectedIndexChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(7, 42);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(62, 13);
+            this.label1.TabIndex = 13;
+            this.label1.Text = "Interface:";
+            // 
             // PacketCaptureUserControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.cobInterfaces);
             this.Controls.Add(this.lblWebIP);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lblWebsite);
             this.Controls.Add(this.tbWebAddress);
-            this.Controls.Add(this.lblUserIP);
-            this.Controls.Add(this.label3);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.lvMessages);
             this.Name = "PacketCaptureUserControl";
-            this.Size = new System.Drawing.Size(1044, 549);
+            this.Size = new System.Drawing.Size(575, 549);
+            this.Load += new System.EventHandler(this.PacketCaptureUserControl_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -231,11 +232,11 @@ namespace TLSDemonstration.UserControls
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton btnStart;
         private System.Windows.Forms.ToolStripButton btnStop;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label lblUserIP;
         private TextBox tbWebAddress;
         private Label lblWebsite;
         private Label lblWebIP;
         private Label label2;
+        private ComboBox cobInterfaces;
+        private Label label1;
     }
 }

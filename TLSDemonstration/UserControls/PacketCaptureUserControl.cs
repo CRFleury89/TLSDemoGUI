@@ -7,23 +7,30 @@ using System.Net;
 using TLSDemonstration.PacketData;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using SharpPcap.LibPcap;
+using SharpPcap;
+using PacketDotNet;
+using System.Threading;
 
 namespace TLSDemonstration.UserControls
 {
     public partial class PacketCaptureUserControl : UserControl
     {
-        IPAddress myIp;
-        IPAddress webIp;
-        Socket _socket;
-        byte[] _in = new byte[4] { 1, 0, 0, 0 };
-        byte[] _out = new byte[4];
-        byte[] _buffer = new byte[8192];
+        List<LibPcapLiveDevice> Interfaces = new List<LibPcapLiveDevice>();
+        LibPcapLiveDevice wifi_device;
+        
+        Thread sniffing;
 
-        private bool Stopped = false;
+        IPAddress webIp;
+
+        private bool Stopped = true;
 
         private BackgroundWorker Worker;
         private string process;
         Regex regex = new Regex(@"([0-9]{1,3}\.){3}[0-9]{1,3}");
+
+        private List<IpPacket> testList = new List<IpPacket>();
 
         public PacketCaptureUserControl()
         {
@@ -45,6 +52,9 @@ namespace TLSDemonstration.UserControls
                 case "start":
                     ExecuteCommand();
                     break;
+                case "update":
+                    while (!Worker.CancellationPending) ;
+                    break;
             }
         }
 
@@ -58,7 +68,7 @@ namespace TLSDemonstration.UserControls
                         btnStop.PerformClick();
                         return;
                     }
-                    lblUserIP.Text = myIp.ToString();
+
                     lblWebIP.Text = webIp.ToString();
                     process = "update";
                     break;
@@ -70,8 +80,7 @@ namespace TLSDemonstration.UserControls
 
         private void RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            btnStart.Enabled = true;
-            btnStop.Enabled = false;
+            if (!Stopped) Worker.RunWorkerAsync();
         }
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -82,14 +91,22 @@ namespace TLSDemonstration.UserControls
                 lvMessages.Items.Clear();
             }
             process = "start";
-            Worker.RunWorkerAsync();
+
+            wifi_device.OnPacketArrival += new PacketArrivalEventHandler(DeviceOnPacketArrival);
+            sniffing = new Thread(new ThreadStart(ProcessReceived));
+
             btnStart.Enabled = false;
             btnStop.Enabled = true;
+            Worker.RunWorkerAsync();
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
             Stopped = true;
+            btnStart.Enabled = true;
+            btnStop.Enabled = false;
+            sniffing.Abort();
+            wifi_device.Close();
         }
 
         private void ExecuteCommand()
@@ -116,64 +133,64 @@ namespace TLSDemonstration.UserControls
 
             process.WaitForExit();
             process.Close();
-            StartCapturing();
+            Worker.ReportProgress(1);
+            sniffing.Start();
         }
 
-        private void StartCapturing()
+        private void DeviceOnPacketArrival(object sender, CaptureEventArgs e)
         {
-            string hostName = Dns.GetHostName();
-            myIp = Dns.GetHostAddresses(hostName)[1];
-            Worker.ReportProgress(1);
+            IpPacket ipPacket = (IpPacket)Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data).Extract(typeof(IpPacket));
+            ListViewItem item = new ListViewItem();
+            testList.Add(ipPacket);
 
-            try
+            if (ipPacket.Protocol.ToString() == "TCP")
             {
-                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.IP);
-                _socket.Bind(new IPEndPoint(myIp, 0));
-                _socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, true);
-                _socket.IOControl(IOControlCode.ReceiveAll, _in, _out);
+                PacketTcp tcp = new PacketTcp(e.Packet.Data, e.Packet.Data.Length);
+                item.Text = DateTime.Now.ToString("HH:mm:ss:") + DateTime.Now.Millisecond.ToString();
+                item.SubItems.Add(ipPacket.SourceAddress.ToString());
+                item.SubItems.Add(tcp.SourcePort);
+                item.SubItems.Add(ipPacket.DestinationAddress.ToString());
+                item.SubItems.Add(tcp.DestinationPort);
+                item.SubItems.Add(ipPacket.Protocol.ToString());
+                item.SubItems.Add(ipPacket.TotalLength.ToString());
+                ipPacket.
 
-                ProcessReceived();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                btnStart.Enabled = true;
-                btnStop.Enabled = false;
+                Worker.ReportProgress(1, item);
             }
         }
 
         private void ProcessReceived()
         {
-            while (!Stopped)
-            {
-                int _bytes = _socket.Receive(_buffer, 0, _buffer.Length, SocketFlags.None);
+            wifi_device.Open(DeviceMode.Promiscuous, 1000);
 
-                if (_bytes > 0 && _buffer.Length > 0)
-                {
-                    ConvertData(_buffer, _bytes);
-                }
-                Array.Clear(_buffer, 0, _buffer.Length);
+            if (wifi_device.Opened)
+            {
+                wifi_device.Filter = "tcp and host " + webIp.ToString();
+            }
+            wifi_device.Capture();
+        }
+
+        private void PacketCaptureUserControl_Load(object sender, EventArgs e)
+        {
+            LibPcapLiveDeviceList devices = LibPcapLiveDeviceList.Instance;
+
+            foreach (LibPcapLiveDevice device in devices)
+            {
+                if (!device.Interface.Addresses.Exists(a => a != null && a.Addr != null && a.Addr.ipAddress != null)) continue;
+                var devInterface = device.Interface;
+                var friendlyName = devInterface.FriendlyName;
+                var description = devInterface.Description;
+
+                Interfaces.Add(device);
+                cobInterfaces.Items.Add(friendlyName);
             }
         }
 
-        private void ConvertData(byte[] bfr, int rcvd)
+        private void cobInterfaces_SelectedIndexChanged(object sender, EventArgs e)
         {
-            PacketIP packet = new PacketIP(bfr, rcvd);
-            ListViewItem item = new ListViewItem();
-
-            if (packet.Protocol == "TCP" 
-                && (packet.SourceAddress.ToString() ==  webIp.ToString() || packet.DestinationAddress.ToString() == webIp.ToString()))
+            if (Stopped)
             {
-                PacketTcp tcp = new PacketTcp(packet.Data, packet.MessageLength);
-                item.Text = DateTime.Now.ToString("HH:mm:ss:") + DateTime.Now.Millisecond.ToString();
-                item.SubItems.Add(packet.SourceAddress.ToString());
-                item.SubItems.Add(tcp.SourcePort);
-                item.SubItems.Add(packet.DestinationAddress.ToString());
-                item.SubItems.Add(tcp.DestinationPort);
-                item.SubItems.Add(packet.Protocol);
-                item.SubItems.Add(packet.TotalLength);
-
-                Worker.ReportProgress(1, item);
+                wifi_device = Interfaces[cobInterfaces.SelectedIndex];
             }
         }
     }

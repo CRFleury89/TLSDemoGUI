@@ -46,7 +46,7 @@ namespace TLSDemonstration
             this.ClientSize = new System.Drawing.Size(585, 570);
             this.Controls.Add(this.userControl11);
             this.Name = "Form1";
-            this.Text = "Data-Cap Tracker";
+            this.Text = "TLS Demonstrator";
             this.ResumeLayout(false);
 
         }
